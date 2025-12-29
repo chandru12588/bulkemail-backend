@@ -8,35 +8,35 @@ export const sendBulkMail = async (req, res) => {
   try {
     const { subject, body, recipients } = req.body;
 
-    if (!subject || !body || !recipients || !recipients.length) {
-      return res.status(400).json({
-        message: "Subject, body, and recipients are required",
-      });
+    if (!subject || !body || !recipients || recipients.length === 0) {
+      return res.status(400).json({ message: "Subject, body & recipients required" });
     }
 
+    // 🔥 Gmail SMTP Working Config for Railway Deployment
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,           // TLS port (465 fails in Railway hosting)
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: { rejectUnauthorized: false }
     });
 
-    await transporter.sendMail({
-      from: `"WrongTurnClub Holidays" <${process.env.EMAIL_USER}>`,
-      to: recipients,
-      subject,
-      html: body,
-    });
+    for (const email of recipients) {
+      await transporter.sendMail({
+        from: `"WrongTurnClub Holidays" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject,
+        html: body,
+      });
+    }
 
-    await EmailLog.create({
-      subject,
-      body,
-      recipients,
-      status: "SUCCESS",
-    });
+    await EmailLog.create({ subject, body, recipients, status: "SUCCESS" });
 
-    res.json({ message: "Emails sent successfully" });
+    return res.json({ success: true, message: "Emails sent successfully 🚀" });
+
   } catch (error) {
     console.error("❌ EMAIL SEND ERROR:", error.message);
 
@@ -47,10 +47,7 @@ export const sendBulkMail = async (req, res) => {
       status: "FAILED",
     });
 
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Mail Sending Failed", error: error.message });
   }
 };
 
@@ -59,13 +56,10 @@ export const sendBulkMail = async (req, res) => {
  */
 export const getHistory = async (req, res) => {
   try {
-    const history = await EmailLog.find()
-      .sort({ createdAt: -1 })
-      .limit(50);
-
-    res.json(history);
+    const history = await EmailLog.find().sort({ createdAt: -1 }).limit(50);
+    return res.json(history);
   } catch (error) {
     console.error("❌ HISTORY FETCH ERROR:", error.message);
-    res.status(500).json({ message: "Failed to fetch email history" });
+    return res.status(500).json({ message: "Failed to fetch history" });
   }
 };

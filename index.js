@@ -10,19 +10,31 @@ connectDB();
 
 const app = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+// --------------------- Middleware ---------------------
+app.use(express.json());  // Required to read req.body from frontend
 
-// Root Route (Fix for "Cannot GET /")
+// Allow frontend access (IMPORTANT for deployment)
+app.use(cors({
+  origin: "*",                    // You can restrict later to Vercel domain
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// --------------------- Routes ---------------------
+
+// Root Test Endpoint
 app.get("/", (req, res) => {
   res.send("🚀 Bulk Email Backend is Live and Running!");
 });
 
-// API Routes
+// Auth (if used)
 app.use("/api/auth", authRoutes);
+
+// Bulk Mail Routes
 app.use("/api/mail", mailRoutes);
 
-// Start Server
+// --------------------- Start Server ---------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
+});
