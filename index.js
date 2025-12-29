@@ -10,27 +10,23 @@ connectDB();
 
 const app = express();
 
-// ---------------- CORS FIX ----------------
+// ------------ CORS FIX (No *) ----------
 app.use(cors({
-  origin: "https://wrongturn-bulkemailapp-u8hm.vercel.app", // your frontend URL
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: ["https://wrongturn-bulkemailapp-u8hm.vercel.app", "http://localhost:5173"],
+  methods: ["GET","POST","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-// handle OPTIONS preflight requests
-app.options("*", cors());
-
-// body parser
 app.use(express.json());
 
-// ---------------- Routes ----------------
-app.get("/", (req, res) => {
-  res.send("🚀 Bulk Email Backend is Live!");
-});
+// ------------ Preflight Handler --------
+app.options("/api/mail/send", cors());
 
+// ------------ Routes -------------------
+app.get("/", (req,res) => res.send("🚀 Bulk Email Backend is Live!"));
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-// ---------------- Server ----------------
+// ------------ Start Server -------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Backend running on PORT ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
