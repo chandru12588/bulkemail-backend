@@ -9,22 +9,29 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// 1. CORS (MUST be before routes)
+app.use(cors({
+  origin: "https://wrongturn-bulkemailapp-u8hm.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
+// 2. Handle preflight OPTIONS requests globally
+app.options("*", cors());
+
+// 3. JSON parser
 app.use(express.json());
 
-// --------------- CORS FINAL FIX ---------------
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://wrongturn-bulkemailapp-u8hm.vercel.app");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
-
-// --------------- Routes ---------------
-app.get("/", (req, res) => res.send("🚀 Bulk Email Backend is Live and Running!"));
+// 4. Routes
+app.get("/", (req, res) => res.send("🚀 Bulk Email Backend is Live!"));
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-// --------------- Server ---------------
+// 5. Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on PORT ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on PORT ${PORT}`);
+});
