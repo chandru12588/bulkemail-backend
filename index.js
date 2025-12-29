@@ -10,31 +10,27 @@ connectDB();
 
 const app = express();
 
-// --------------------- Middleware ---------------------
-app.use(express.json());  // Required to read req.body from frontend
-
-// Allow frontend access (IMPORTANT for deployment)
+// ----------------- CORS FIX -----------------
 app.use(cors({
-  origin: "*",                    // You can restrict later to Vercel domain
+  origin: [
+    "https://wrongturn-bulkemailapp-u8hm.vercel.app",  // your frontend URL
+    "http://localhost:5173"                            // for local testing
+  ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// --------------------- Routes ---------------------
+// Body parser
+app.use(express.json());
 
-// Root Test Endpoint
+// ----------------- Routes -----------------
 app.get("/", (req, res) => {
   res.send("🚀 Bulk Email Backend is Live and Running!");
 });
 
-// Auth (if used)
 app.use("/api/auth", authRoutes);
-
-// Bulk Mail Routes
 app.use("/api/mail", mailRoutes);
 
-// --------------------- Start Server ---------------------
+// ----------------- Server -----------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
