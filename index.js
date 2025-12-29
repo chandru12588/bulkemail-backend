@@ -9,12 +9,20 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
+// Root Route (Fix for "Cannot GET /")
+app.get("/", (req, res) => {
+  res.send("🚀 Bulk Email Backend is Live and Running!");
+});
+
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-app.listen(process.env.PORT, () =>
-  console.log("🚀 Backend running on port " + process.env.PORT)
-);
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
