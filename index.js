@@ -10,25 +10,28 @@ connectDB();
 
 const app = express();
 
-// ---- CORS (must load before routes) ----
+// ---------- CORS (Safe & No Wildcards) ----------
 app.use(cors({
-  origin: "https://wrongturn-bulkemailapp-u8hm.vercel.app",
+  origin: "https://wrongturn-bulkemailapp-u8hm.vercel.app", // your frontend
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json());
 
-// ---- Preflight handler (works only with express v4) ----
-app.options("/*", (req, res) => {
-  res.sendStatus(200);
+// Global OPTIONS handler without wildcard
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
 });
 
-// ---- Routes ----
+// ---------- Routes ----------
 app.get("/", (req, res) => res.send("🚀 Bulk Email Backend Live!"));
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-// ---- Server ----
+// ---------- Server ----------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running at ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server running at ${PORT}`));
