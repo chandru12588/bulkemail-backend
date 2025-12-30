@@ -1,7 +1,8 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import EmailLog from "../models/EmailLog.js";
 
-// ================= SEND BULK MAIL ================= //
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 export const sendBulkMail = async (req, res) => {
   try {
     const { subject, body, recipients } = req.body;
@@ -10,40 +11,36 @@ export const sendBulkMail = async (req, res) => {
       return res.status(400).json({ message: "Subject, body & recipients required" });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,      // MUST be Gmail App Password
+    const messages = recipients.map(email => ({
+      to: email,
+      from: {
+        name: "WrongTurnClub Holidays",
+        email: process.env.EMAIL_USER   // must be verified sender email in SendGrid
       },
-    });
+      subject,
+      html: body,
+    }));
 
-    for (const email of recipients) {
-      await transporter.sendMail({
-        from: `"WrongTurnClub Holidays" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject,
-        html: body,
-      });
-    }
+    await sgMail.send(messages, { batch: true });
 
     await EmailLog.create({ subject, body, recipients, status: "SUCCESS" });
-
-    return res.json({ success: true, message: "Emails sent successfully 🚀" });
+    return res.json({ success:true, message:"Emails sent successfully 🚀" });
 
   } catch (error) {
-    console.log("❌ Mail Error:", error);
-    return res.status(500).json({ success: false, message: "Mail failed", error: error.message });
-  }
-};
+    console.error("SENDGRID ERROR:", error.response?.body?.errors || error.message);
 
+    await EmailLog.create({
+      subject: req.body.subject,
+      body: req.body.body,
+      recipients: req.body.recipients || [],
+      status: "FAILED",
+      error: JSON.stringify(error.response?.body?.errors || error.message)
+    });
 
-// ================= EMAIL HISTORY ================= //
-export const getHistory = async (req, res) => {
-  try {
-    const logs = await EmailLog.find().sort({ createdAt: -1 }).limit(50);
-    return res.json(logs);
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to load history" });
+    return res.status(500).json({
+      success:false,
+      message:"Mail failed",
+      error:error.response?.body?.errors || error.message
+    });
   }
 };
