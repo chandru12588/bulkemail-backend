@@ -12,16 +12,13 @@ export const sendBulkMail = async (req, res) => {
       return res.status(400).json({ message: "Subject, body & recipients required" });
     }
 
-    // 🔥 Gmail SMTP Working Config for Railway Deployment
+    // FINAL Gmail SMTP setup for Railway 🚀 (App Password must be used)
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,           // TLS port (465 fails in Railway hosting)
-      secure: false,
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS,     // MUST be Gmail App Password
       },
-      tls: { rejectUnauthorized: false }
     });
 
     for (const email of recipients) {
@@ -50,6 +47,7 @@ export const sendBulkMail = async (req, res) => {
     return res.status(500).json({ success: false, message: "Mail Sending Failed", error: error.message });
   }
 };
+
 
 /**
  * 📜 Get Email History
