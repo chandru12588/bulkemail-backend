@@ -6,32 +6,55 @@ import authRoutes from "./routes/authRoutes.js";
 import mailRoutes from "./routes/mailRoutes.js";
 
 dotenv.config();
+
+// Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// === REAL FIX 🔥 (One CLEAN CORS config only) ===
-app.use(cors({
-  origin: process.env.FRONTEND_URL,  // https://wrongturn-bulkemailapp-u8hm.vercel.app
-  methods: "GET,POST,PUT,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization"
-}));
+// ============================
+// 🔥 CORS FIX — working version
+// ============================
+const allowedOrigins = [
+  process.env.FRONTEND_URL,                   // Main production frontend
+  "http://localhost:5173",                    // Local testing
+  "http://localhost:3000",
+];
 
-app.use(express.json());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
+  })
+);
 
-// Handle preflight globally
+// Handle preflight requests globally
 app.options("*", cors());
 
-// --- Routes ---
+// Parse JSON
+app.use(express.json());
+
+// ============================
+// 📌 Test Route
+// ============================
 app.get("/", (req, res) => {
-  res.json({ status: "backend alive", url: process.env.FRONTEND_URL });
+  res.json({
+    status: "backend alive",
+    frontend: process.env.FRONTEND_URL,
+  });
 });
 
+// ============================
+// 📌 API Routes
+// ============================
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-// --- Start Server ---
+// ============================
+// 🚀 Start Server
+// ============================
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () =>
-  console.log("🚀 Backend running on port", PORT)
-);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
+});
