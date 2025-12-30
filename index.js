@@ -10,30 +10,33 @@ connectDB();
 
 const app = express();
 
-app.use(express.json());
+// ------------------- FIXED CORS -------------------
+const allowedOrigins = [
+  process.env.FRONTEND_URL,   // Vercel URL
+  "http://localhost:5000",    // Backend local
+  "http://localhost:5173"     // Vite frontend local
+];
 
-// 🚀 Allow frontend access
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
-// For preflight OPTIONS request
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  return res.sendStatus(200);
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
 });
 
-// ---------- ROUTES ----------
-app.get("/", (req, res) => res.send("🚀 Bulk Email Backend Live & Running!"));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(express.json());
+
+// --------------------------------------------------
+app.get("/", (req, res) => res.send("Backend Live 🚀"));
 app.use("/api/auth", authRoutes);
 app.use("/api/mail", mailRoutes);
 
-// ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`🚀 Backend running on ${PORT}`)
 );
